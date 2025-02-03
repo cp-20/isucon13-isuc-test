@@ -38,11 +38,11 @@ const cachePlanRaw = `queries:
     table: livecomment_reports
     cache: true
     targets:
-      - user_id
-      - livestream_id
       - livecomment_id
       - id
       - created_at
+      - user_id
+      - livestream_id
     conditions:
       - column: livestream_id
         operator: eq
@@ -88,17 +88,16 @@ const cachePlanRaw = `queries:
     table: users
     cache: true
     targets:
-      - password
       - description
       - id
       - name
       - display_name
+      - password
   - query: SELECT * FROM livestreams WHERE user_id = ?;
     type: select
     table: livestreams
     cache: true
     targets:
-      - title
       - description
       - playlist_url
       - thumbnail_url
@@ -106,6 +105,7 @@ const cachePlanRaw = `queries:
       - end_at
       - id
       - user_id
+      - title
     conditions:
       - column: user_id
         operator: eq
@@ -162,12 +162,12 @@ const cachePlanRaw = `queries:
     table: livecomments
     cache: true
     targets:
-      - user_id
       - livestream_id
       - comment
       - tip
       - created_at
       - id
+      - user_id
     conditions:
       - column: livestream_id
         operator: eq
@@ -206,14 +206,14 @@ const cachePlanRaw = `queries:
     table: livestreams
     cache: true
     targets:
-      - user_id
-      - title
-      - description
-      - playlist_url
       - thumbnail_url
       - start_at
       - end_at
       - id
+      - user_id
+      - title
+      - description
+      - playlist_url
     conditions:
       - column: LIMIT()
         operator: eq
@@ -228,12 +228,12 @@ const cachePlanRaw = `queries:
     table: livecomments
     cache: true
     targets:
+      - created_at
       - id
       - user_id
       - livestream_id
       - comment
       - tip
-      - created_at
   - query: SELECT IFNULL(SUM(l2.tip), 0) FROM users u INNER JOIN livestreams l ON l.user_id = u.id INNER JOIN livecomments l2 ON l2.livestream_id = l.id WHERE u.id = ?;
     type: select
     table: users
@@ -243,9 +243,9 @@ const cachePlanRaw = `queries:
     table: livestream_tags
     cache: true
     targets:
+      - id
       - livestream_id
       - tag_id
-      - id
     conditions:
       - column: tag_id
         operator: in
@@ -268,11 +268,11 @@ const cachePlanRaw = `queries:
     table: reactions
     cache: true
     targets:
+      - created_at
+      - id
       - user_id
       - livestream_id
       - emoji_name
-      - created_at
-      - id
     conditions:
       - column: livestream_id
         operator: eq
@@ -286,11 +286,11 @@ const cachePlanRaw = `queries:
     table: users
     cache: true
     targets:
-      - description
-      - id
       - name
       - display_name
       - password
+      - description
+      - id
     conditions:
       - column: id
         operator: eq
@@ -350,12 +350,12 @@ const cachePlanRaw = `queries:
     table: livecomments
     cache: true
     targets:
+      - comment
+      - tip
       - created_at
       - id
       - user_id
       - livestream_id
-      - comment
-      - tip
     conditions:
       - column: id
         operator: eq
@@ -374,12 +374,12 @@ const cachePlanRaw = `queries:
     table: livecomments
     cache: true
     targets:
-      - id
       - user_id
       - livestream_id
       - comment
       - tip
       - created_at
+      - id
     conditions:
       - column: livestream_id
         operator: eq
@@ -417,11 +417,11 @@ const cachePlanRaw = `queries:
     table: reactions
     cache: true
     targets:
+      - livestream_id
+      - emoji_name
       - created_at
       - id
       - user_id
-      - livestream_id
-      - emoji_name
     conditions:
       - column: livestream_id
         operator: eq
@@ -440,11 +440,11 @@ const cachePlanRaw = `queries:
     table: users
     cache: true
     targets:
+      - description
+      - id
       - name
       - display_name
       - password
-      - description
-      - id
     conditions:
       - column: name
         operator: eq
@@ -455,7 +455,6 @@ const cachePlanRaw = `queries:
     table: livestreams
     cache: true
     targets:
-      - playlist_url
       - thumbnail_url
       - start_at
       - end_at
@@ -463,6 +462,7 @@ const cachePlanRaw = `queries:
       - user_id
       - title
       - description
+      - playlist_url
     conditions:
       - column: id
         operator: eq
@@ -495,12 +495,12 @@ const cachePlanRaw = `queries:
     table: livecomments
     cache: true
     targets:
-      - user_id
       - livestream_id
       - comment
       - tip
       - created_at
       - id
+      - user_id
     conditions:
       - column: livestream_id
         operator: eq
@@ -534,11 +534,11 @@ const cachePlanRaw = `queries:
     table: ng_words
     cache: true
     targets:
-      - id
       - user_id
       - livestream_id
       - word
       - created_at
+      - id
     conditions:
       - column: user_id
         operator: eq
@@ -564,12 +564,12 @@ const cachePlanRaw = `queries:
     table: livecomments
     cache: true
     targets:
-      - tip
-      - created_at
       - id
       - user_id
       - livestream_id
       - comment
+      - tip
+      - created_at
     conditions:
       - column: livestream_id
         operator: eq
@@ -584,14 +584,14 @@ const cachePlanRaw = `queries:
     table: livestreams
     cache: true
     targets:
-      - end_at
-      - id
-      - user_id
-      - title
       - description
       - playlist_url
       - thumbnail_url
       - start_at
+      - end_at
+      - id
+      - user_id
+      - title
     conditions:
       - column: id
         operator: eq
@@ -606,9 +606,9 @@ const cachePlanRaw = `queries:
     table: themes
     cache: true
     targets:
+      - user_id
       - dark_mode
       - id
-      - user_id
     conditions:
       - column: user_id
         operator: eq
@@ -691,7 +691,7 @@ CREATE TABLE ` + "`" + `icons` + "`" + ` (
   ` + "`" + `id` + "`" + ` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   ` + "`" + `user_id` + "`" + ` BIGINT NOT NULL,
   ` + "`" + `image` + "`" + ` LONGBLOB NOT NULL,
-  INDEX ` + "`" + `idx_user_id` + "`" + ` (` + "`" + `user_id` + "`" + `)
+  UNIQUE ` + "`" + `uniq_user_id` + "`" + ` (` + "`" + `user_id` + "`" + `)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
 -- ユーザごとのカスタムテーマ
@@ -721,7 +721,7 @@ CREATE TABLE ` + "`" + `reservation_slots` + "`" + ` (
   ` + "`" + `slot` + "`" + ` BIGINT NOT NULL,
   ` + "`" + `start_at` + "`" + ` BIGINT NOT NULL,
   ` + "`" + `end_at` + "`" + ` BIGINT NOT NULL,
-  INDEX ` + "`" + `start_at_end_at` + "`" + ` (` + "`" + `start_at` + "`" + `, ` + "`" + `end_at` + "`" + `)
+  INDEX ` + "`" + `idx_slot_start_at_end_at` + "`" + ` (` + "`" + `slot` + "`" + `, ` + "`" + `start_at` + "`" + `, ` + "`" + `end_at` + "`" + `)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
 -- ライブストリームに付与される、サービスで定義されたタグ
@@ -736,7 +736,7 @@ CREATE TABLE ` + "`" + `livestream_tags` + "`" + ` (
   ` + "`" + `id` + "`" + ` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   ` + "`" + `livestream_id` + "`" + ` BIGINT NOT NULL,
   ` + "`" + `tag_id` + "`" + ` BIGINT NOT NULL,
-  INDEX ` + "`" + `idx_livestream_id` + "`" + ` (` + "`" + `livestream_id` + "`" + `),
+  INDEX ` + "`" + `idx_livestream_id_id_tag_id` + "`" + ` (` + "`" + `livestream_id` + "`" + `, ` + "`" + `id` + "`" + `, ` + "`" + `tag_id` + "`" + `),
   INDEX ` + "`" + `idx_tag_id_livestream_id` + "`" + ` (` + "`" + `tag_id` + "`" + `, ` + "`" + `livestream_id` + "`" + `)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 

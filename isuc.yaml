@@ -15,11 +15,11 @@ queries:
     table: livecomment_reports
     cache: true
     targets:
-      - user_id
-      - livestream_id
       - livecomment_id
       - id
       - created_at
+      - user_id
+      - livestream_id
     conditions:
       - column: livestream_id
         operator: eq
@@ -65,17 +65,16 @@ queries:
     table: users
     cache: true
     targets:
-      - password
       - description
       - id
       - name
       - display_name
+      - password
   - query: SELECT * FROM livestreams WHERE user_id = ?;
     type: select
     table: livestreams
     cache: true
     targets:
-      - title
       - description
       - playlist_url
       - thumbnail_url
@@ -83,6 +82,7 @@ queries:
       - end_at
       - id
       - user_id
+      - title
     conditions:
       - column: user_id
         operator: eq
@@ -139,12 +139,12 @@ queries:
     table: livecomments
     cache: true
     targets:
-      - user_id
       - livestream_id
       - comment
       - tip
       - created_at
       - id
+      - user_id
     conditions:
       - column: livestream_id
         operator: eq
@@ -183,14 +183,14 @@ queries:
     table: livestreams
     cache: true
     targets:
-      - user_id
-      - title
-      - description
-      - playlist_url
       - thumbnail_url
       - start_at
       - end_at
       - id
+      - user_id
+      - title
+      - description
+      - playlist_url
     conditions:
       - column: LIMIT()
         operator: eq
@@ -205,12 +205,12 @@ queries:
     table: livecomments
     cache: true
     targets:
+      - created_at
       - id
       - user_id
       - livestream_id
       - comment
       - tip
-      - created_at
   - query: SELECT IFNULL(SUM(l2.tip), 0) FROM users u INNER JOIN livestreams l ON l.user_id = u.id INNER JOIN livecomments l2 ON l2.livestream_id = l.id WHERE u.id = ?;
     type: select
     table: users
@@ -220,9 +220,9 @@ queries:
     table: livestream_tags
     cache: true
     targets:
+      - id
       - livestream_id
       - tag_id
-      - id
     conditions:
       - column: tag_id
         operator: in
@@ -245,11 +245,11 @@ queries:
     table: reactions
     cache: true
     targets:
+      - created_at
+      - id
       - user_id
       - livestream_id
       - emoji_name
-      - created_at
-      - id
     conditions:
       - column: livestream_id
         operator: eq
@@ -263,11 +263,11 @@ queries:
     table: users
     cache: true
     targets:
-      - description
-      - id
       - name
       - display_name
       - password
+      - description
+      - id
     conditions:
       - column: id
         operator: eq
@@ -327,12 +327,12 @@ queries:
     table: livecomments
     cache: true
     targets:
+      - comment
+      - tip
       - created_at
       - id
       - user_id
       - livestream_id
-      - comment
-      - tip
     conditions:
       - column: id
         operator: eq
@@ -351,12 +351,12 @@ queries:
     table: livecomments
     cache: true
     targets:
-      - id
       - user_id
       - livestream_id
       - comment
       - tip
       - created_at
+      - id
     conditions:
       - column: livestream_id
         operator: eq
@@ -394,11 +394,11 @@ queries:
     table: reactions
     cache: true
     targets:
+      - livestream_id
+      - emoji_name
       - created_at
       - id
       - user_id
-      - livestream_id
-      - emoji_name
     conditions:
       - column: livestream_id
         operator: eq
@@ -417,11 +417,11 @@ queries:
     table: users
     cache: true
     targets:
+      - description
+      - id
       - name
       - display_name
       - password
-      - description
-      - id
     conditions:
       - column: name
         operator: eq
@@ -432,7 +432,6 @@ queries:
     table: livestreams
     cache: true
     targets:
-      - playlist_url
       - thumbnail_url
       - start_at
       - end_at
@@ -440,6 +439,7 @@ queries:
       - user_id
       - title
       - description
+      - playlist_url
     conditions:
       - column: id
         operator: eq
@@ -472,12 +472,12 @@ queries:
     table: livecomments
     cache: true
     targets:
-      - user_id
       - livestream_id
       - comment
       - tip
       - created_at
       - id
+      - user_id
     conditions:
       - column: livestream_id
         operator: eq
@@ -511,11 +511,11 @@ queries:
     table: ng_words
     cache: true
     targets:
-      - id
       - user_id
       - livestream_id
       - word
       - created_at
+      - id
     conditions:
       - column: user_id
         operator: eq
@@ -541,12 +541,12 @@ queries:
     table: livecomments
     cache: true
     targets:
-      - tip
-      - created_at
       - id
       - user_id
       - livestream_id
       - comment
+      - tip
+      - created_at
     conditions:
       - column: livestream_id
         operator: eq
@@ -561,14 +561,14 @@ queries:
     table: livestreams
     cache: true
     targets:
-      - end_at
-      - id
-      - user_id
-      - title
       - description
       - playlist_url
       - thumbnail_url
       - start_at
+      - end_at
+      - id
+      - user_id
+      - title
     conditions:
       - column: id
         operator: eq
@@ -583,9 +583,9 @@ queries:
     table: themes
     cache: true
     targets:
+      - user_id
       - dark_mode
       - id
-      - user_id
     conditions:
       - column: user_id
         operator: eq
