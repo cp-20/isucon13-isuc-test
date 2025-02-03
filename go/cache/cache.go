@@ -130,7 +130,13 @@ func cacheKey(args []driver.Value) string {
 }
 
 func replaceFn(ctx context.Context, key string) (*cacheRows, error) {
+	cache := ctx.Value(cacheWithInfoKey{}).(*cacheWithInfo)
 	start := time.Now()
+	defer func() {
+		elapsed := time.Since(start)
+		cache.RecordReplaceTime(elapsed)
+	}()
+
 	queryerCtx, ok := ctx.Value(queryerCtxKey{}).(driver.QueryerContext)
 	if ok {
 		query := ctx.Value(queryKey{}).(string)
@@ -156,14 +162,7 @@ func replaceFn(ctx context.Context, key string) (*cacheRows, error) {
 	if err != nil {
 		return nil, err
 	}
-	result := cacheRows.clone()
-
-	cache := ctx.Value(cacheWithInfoKey{}).(*cacheWithInfo)
-	elapsed := time.Since(start)
-	cache.RecordReplaceTime(elapsed)
-	fmt.Printf("replaced cache: %s (%.2fms)\n", cache.query, float64(elapsed)/1000)
-
-	return result, nil
+	return cacheRows.clone(), nil
 }
 
 type syncMap[T any] struct {
