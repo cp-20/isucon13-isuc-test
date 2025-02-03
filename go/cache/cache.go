@@ -161,6 +161,7 @@ func replaceFn(ctx context.Context, key string) (*cacheRows, error) {
 	cache := ctx.Value(cacheWithInfoKey{}).(*cacheWithInfo)
 	elapsed := time.Since(start)
 	cache.RecordReplaceTime(elapsed)
+	fmt.Printf("replaced cache: %s (%.2fms)\n", cache.query, float64(elapsed)/1000)
 
 	return result, nil
 }
