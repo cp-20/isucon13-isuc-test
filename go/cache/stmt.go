@@ -53,13 +53,13 @@ func (s *customCacheStatement) execInsert(args []driver.Value) (driver.Result, e
 }
 
 func (s *customCacheStatement) execUpdate(args []driver.Value) (driver.Result, error) {
-	handleUpdateQuery(*s.queryInfo.Update, args)
+	handleUpdateQuery(s.queryInfo.Query, *s.queryInfo.Update, args)
 	nvarsgs := valueToNamedValue(args)
 	return s.inner.(driver.StmtExecContext).ExecContext(context.Background(), nvarsgs)
 }
 
 func (s *customCacheStatement) execDelete(args []driver.Value) (driver.Result, error) {
-	handleDeleteQuery(*s.queryInfo.Delete, args)
+	handleDeleteQuery(s.queryInfo.Query, *s.queryInfo.Delete, args)
 	nvargs := valueToNamedValue(args)
 	return s.inner.(driver.StmtExecContext).ExecContext(context.Background(), nvargs)
 }
@@ -126,7 +126,7 @@ func (c *cacheConn) execInsert(ctx context.Context, rawQuery string, queryInfo d
 func (c *cacheConn) execUpdate(ctx context.Context, rawQuery string, queryInfo domains.CachePlanQuery, nvargs []driver.NamedValue, inner driver.ExecerContext) (driver.Result, error) {
 	args := namedToValue(nvargs)
 
-	cleanUp := handleUpdateQuery(*queryInfo.Update, args)
+	cleanUp := handleUpdateQuery(queryInfo.Query, *queryInfo.Update, args)
 	c.cleanUp.append(cleanUp)
 
 	return inner.ExecContext(ctx, rawQuery, nvargs)
@@ -135,7 +135,7 @@ func (c *cacheConn) execUpdate(ctx context.Context, rawQuery string, queryInfo d
 func (c *cacheConn) execDelete(ctx context.Context, rawQuery string, queryInfo domains.CachePlanQuery, nvargs []driver.NamedValue, inner driver.ExecerContext) (driver.Result, error) {
 	args := namedToValue(nvargs)
 
-	cleanUp := handleDeleteQuery(*queryInfo.Delete, args)
+	cleanUp := handleDeleteQuery(queryInfo.Query, *queryInfo.Delete, args)
 	c.cleanUp.append(cleanUp)
 
 	return inner.ExecContext(ctx, rawQuery, nvargs)
@@ -301,6 +301,7 @@ func handleInsertQuery(query string, queryInfo domains.CachePlanInsertQuery, ins
 		isComplexQuery := len(cacheConditions) != 1 || len(insertArgs.ExtraArgs) > 0 || cacheConditions[0].Operator != domains.CachePlanOperator_EQ
 		if isComplexQuery {
 			cleanUp.purge = append(cleanUp.purge, cache)
+			verboseLogf("cache purge (insert, complex cache): %s -> %s", query, cache.query)
 			continue
 		}
 
@@ -311,17 +312,20 @@ func handleInsertQuery(query string, queryInfo domains.CachePlanInsertQuery, ins
 			// select query: "SELECT * FROM table WHERE col1 = ?"
 			// forget the cache
 			for row := range rows {
-				cleanUp.forget = append(cleanUp.forget, forgetTask{cache, cacheKey([]driver.Value{row[insertColumnIdx]})})
+				key := cacheKey([]driver.Value{row[insertColumnIdx]})
+				cleanUp.forget = append(cleanUp.forget, forgetTask{cache, key})
+				verboseLogf("cache forget (insert, simple cache): %s -> %s (key = \"%s\")", query, cache.query, key)
 			}
 		} else {
 			cleanUp.purge = append(cleanUp.purge, cache)
+			verboseLogf("cache purge (insert, simple cache): %s -> %s", query, cache.query)
 		}
 	}
 
 	return cleanUp
 }
 
-func handleUpdateQuery(queryInfo domains.CachePlanUpdateQuery, args []driver.Value) cleanUpTask {
+func handleUpdateQuery(query string, queryInfo domains.CachePlanUpdateQuery, args []driver.Value) cleanUpTask {
 	// TODO: support composite primary key and other unique key
 	table := queryInfo.Table
 	updateConditions := queryInfo.Conditions
@@ -336,6 +340,7 @@ func handleUpdateQuery(queryInfo domains.CachePlanUpdateQuery, args []driver.Val
 				continue
 			}
 			cleanUp.purge = append(cleanUp.purge, cache)
+			verboseLogf("cache purge (update, non-unique condition): %s -> %s", query, cache.query)
 		}
 		return cleanUp
 	}
@@ -352,16 +357,19 @@ func handleUpdateQuery(queryInfo domains.CachePlanUpdateQuery, args []driver.Val
 		cacheConditions := cache.info.Conditions
 		if isSingleUniqueCondition(cacheConditions, table) && cacheConditions[0].Column == updateCondition.Column {
 			// forget only the updated row
-			cleanUp.forget = append(cleanUp.forget, forgetTask{cache, cacheKey([]driver.Value{uniqueValue})})
+			key := cacheKey([]driver.Value{uniqueValue})
+			cleanUp.forget = append(cleanUp.forget, forgetTask{cache, key})
+			verboseLogf("cache forget (update, unique condition, unique cache): %s -> %s (key = \"%s\")", query, cache.query, key)
 		} else {
 			cleanUp.purge = append(cleanUp.purge, cache)
+			verboseLogf("cache purge (update, unique condition, non-unique cache): %s -> %s", query, cache.query)
 		}
 	}
 
 	return cleanUp
 }
 
-func handleDeleteQuery(queryInfo domains.CachePlanDeleteQuery, args []driver.Value) cleanUpTask {
+func handleDeleteQuery(query string, queryInfo domains.CachePlanDeleteQuery, args []driver.Value) cleanUpTask {
 	table := queryInfo.Table
 
 	var cleanUp cleanUpTask
@@ -376,6 +384,9 @@ func handleDeleteQuery(queryInfo domains.CachePlanDeleteQuery, args []driver.Val
 	if !deleteByUnique {
 		// we should purge all cache
 		cleanUp.purge = append(cleanUp.purge, cacheByTable[table]...)
+		for _, cache := range cacheByTable[table] {
+			verboseLogf("cache purge (delete, non-unique condition): %s -> %s", query, cache.query)
+		}
 		return cleanUp
 	}
 
@@ -386,8 +397,10 @@ func handleDeleteQuery(queryInfo domains.CachePlanDeleteQuery, args []driver.Val
 			// query like "SELECT * FROM table WHERE pk = ?"
 			// we should forget the cache
 			cleanUp.forget = append(cleanUp.forget, forgetTask{cache, cacheKey([]driver.Value{uniqueValue})})
+			verboseLogf("cache forget (delete, unique condition, unique cache): %s -> %s", query, cache.query)
 		} else {
 			cleanUp.purge = append(cleanUp.purge, cache)
+			verboseLogf("cache purge (delete, unique condition, non-unique cache): %s -> %s", query, cache.query)
 		}
 	}
 

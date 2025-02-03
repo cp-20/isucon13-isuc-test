@@ -121,6 +121,7 @@ func initializeHandler(c echo.Context) error {
 }
 
 func main() {
+	cache.EnableVerboseLog()
 	e := echo.New()
 	e.Debug = true
 	e.Logger.SetLevel(echolog.DEBUG)
