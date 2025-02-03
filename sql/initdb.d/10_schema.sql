@@ -28,7 +28,7 @@ CREATE TABLE `icons` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `user_id` BIGINT NOT NULL,
   `image` LONGBLOB NOT NULL,
-  INDEX `idx_user_id` (`user_id`)
+  UNIQUE `uniq_user_id` (`user_id`)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
 -- ユーザごとのカスタムテーマ
@@ -58,7 +58,7 @@ CREATE TABLE `reservation_slots` (
   `slot` BIGINT NOT NULL,
   `start_at` BIGINT NOT NULL,
   `end_at` BIGINT NOT NULL,
-  INDEX `start_at_end_at` (`start_at`, `end_at`)
+  INDEX `idx_slot_start_at_end_at` (`slot`, `start_at`, `end_at`)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
 -- ライブストリームに付与される、サービスで定義されたタグ
@@ -73,7 +73,7 @@ CREATE TABLE `livestream_tags` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `livestream_id` BIGINT NOT NULL,
   `tag_id` BIGINT NOT NULL,
-  INDEX `idx_livestream_id` (`livestream_id`),
+  INDEX `idx_livestream_id_id_tag_id` (`livestream_id`, `id`, `tag_id`),
   INDEX `idx_tag_id_livestream_id` (`tag_id`, `livestream_id`)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
