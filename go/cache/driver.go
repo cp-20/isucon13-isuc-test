@@ -87,11 +87,11 @@ const cachePlanRaw = `queries:
     table: users
     cache: true
     targets:
+      - password
+      - description
       - id
       - name
       - display_name
-      - password
-      - description
   - query: SELECT * FROM livestreams WHERE user_id = ?;
     type: select
     table: livestreams
@@ -115,14 +115,14 @@ const cachePlanRaw = `queries:
     table: livestreams
     cache: true
     targets:
+      - description
+      - playlist_url
       - thumbnail_url
       - start_at
       - end_at
       - id
       - user_id
       - title
-      - description
-      - playlist_url
   - query: SELECT COUNT(*) FROM livestreams l INNER JOIN livecomment_reports r ON r.livestream_id = l.id WHERE l.id = ?;
     type: select
     table: livestreams
@@ -161,12 +161,12 @@ const cachePlanRaw = `queries:
     table: livecomments
     cache: true
     targets:
-      - tip
-      - created_at
-      - id
       - user_id
       - livestream_id
       - comment
+      - tip
+      - created_at
+      - id
     conditions:
       - column: livestream_id
         operator: eq
@@ -205,14 +205,14 @@ const cachePlanRaw = `queries:
     table: livestreams
     cache: true
     targets:
+      - user_id
+      - title
       - description
       - playlist_url
       - thumbnail_url
       - start_at
       - end_at
       - id
-      - user_id
-      - title
     conditions:
       - column: LIMIT()
         operator: eq
@@ -227,12 +227,12 @@ const cachePlanRaw = `queries:
     table: livecomments
     cache: true
     targets:
+      - id
+      - user_id
       - livestream_id
       - comment
       - tip
       - created_at
-      - id
-      - user_id
   - query: SELECT IFNULL(SUM(l2.tip), 0) FROM users u INNER JOIN livestreams l ON l.user_id = u.id INNER JOIN livecomments l2 ON l2.livestream_id = l.id WHERE u.id = ?;
     type: select
     table: users
@@ -242,9 +242,9 @@ const cachePlanRaw = `queries:
     table: livestream_tags
     cache: true
     targets:
+      - livestream_id
       - tag_id
       - id
-      - livestream_id
     conditions:
       - column: tag_id
         operator: in
@@ -267,11 +267,11 @@ const cachePlanRaw = `queries:
     table: reactions
     cache: true
     targets:
-      - id
       - user_id
       - livestream_id
       - emoji_name
       - created_at
+      - id
     conditions:
       - column: livestream_id
         operator: eq
@@ -285,11 +285,11 @@ const cachePlanRaw = `queries:
     table: users
     cache: true
     targets:
-      - password
       - description
       - id
       - name
       - display_name
+      - password
     conditions:
       - column: id
         operator: eq
@@ -349,12 +349,12 @@ const cachePlanRaw = `queries:
     table: livecomments
     cache: true
     targets:
+      - created_at
       - id
       - user_id
       - livestream_id
       - comment
       - tip
-      - created_at
     conditions:
       - column: id
         operator: eq
@@ -416,11 +416,11 @@ const cachePlanRaw = `queries:
     table: reactions
     cache: true
     targets:
+      - created_at
+      - id
       - user_id
       - livestream_id
       - emoji_name
-      - created_at
-      - id
     conditions:
       - column: livestream_id
         operator: eq
@@ -454,14 +454,14 @@ const cachePlanRaw = `queries:
     table: livestreams
     cache: true
     targets:
-      - user_id
-      - title
-      - description
       - playlist_url
       - thumbnail_url
       - start_at
       - end_at
       - id
+      - user_id
+      - title
+      - description
     conditions:
       - column: id
         operator: eq
@@ -494,12 +494,12 @@ const cachePlanRaw = `queries:
     table: livecomments
     cache: true
     targets:
+      - user_id
+      - livestream_id
       - comment
       - tip
       - created_at
       - id
-      - user_id
-      - livestream_id
     conditions:
       - column: livestream_id
         operator: eq
@@ -511,7 +511,19 @@ const cachePlanRaw = `queries:
   - query: UPDATE reservation_slots SET slot = slot - 1 WHERE start_at >= ? AND end_at <= ?;
     type: update
     table: reservation_slots
-    targets: []
+    targets:
+      - column: end_at
+        placeholder:
+          index: 0
+      - column: id
+        placeholder:
+          index: 1
+      - column: slot
+        placeholder:
+          index: 2
+      - column: start_at
+        placeholder:
+          index: 3
   - query: SELECT COUNT(*) FROM users u INNER JOIN livestreams l ON l.user_id = u.id INNER JOIN reactions r ON r.livestream_id = l.id WHERE u.name = ?;
     type: select
     table: users
@@ -521,11 +533,11 @@ const cachePlanRaw = `queries:
     table: ng_words
     cache: true
     targets:
-      - word
-      - created_at
       - id
       - user_id
       - livestream_id
+      - word
+      - created_at
     conditions:
       - column: user_id
         operator: eq
@@ -551,12 +563,12 @@ const cachePlanRaw = `queries:
     table: livecomments
     cache: true
     targets:
-      - comment
       - tip
       - created_at
       - id
       - user_id
       - livestream_id
+      - comment
     conditions:
       - column: livestream_id
         operator: eq
@@ -593,9 +605,9 @@ const cachePlanRaw = `queries:
     table: themes
     cache: true
     targets:
-      - user_id
       - dark_mode
       - id
+      - user_id
     conditions:
       - column: user_id
         operator: eq
@@ -633,11 +645,11 @@ const cachePlanRaw = `queries:
     table: ng_words
     cache: true
     targets:
-      - user_id
-      - livestream_id
       - word
       - created_at
       - id
+      - user_id
+      - livestream_id
     conditions:
       - column: livestream_id
         operator: eq
