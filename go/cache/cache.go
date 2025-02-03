@@ -158,10 +158,10 @@ func replaceFn(ctx context.Context, key string) (*cacheRows, error) {
 	}
 	result := cacheRows.clone()
 
-	if cache, ok := ctx.Value(cacheWithInfoKey{}).(*cacheWithInfo); ok {
-		elapsed := time.Since(start)
-		cache.RecordReplaceTime(elapsed)
-	}
+	cache := ctx.Value(cacheWithInfoKey{}).(*cacheWithInfo)
+	elapsed := time.Since(start)
+	cache.RecordReplaceTime(elapsed)
+
 	return result, nil
 }
 
