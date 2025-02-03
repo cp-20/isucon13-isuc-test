@@ -4,8 +4,47 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
+	"sort"
 	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
+
+	"github.com/motoki317/sc"
+	"github.com/traP-jp/isuc/domains"
 )
+
+type cacheWithInfo struct {
+	*sc.Cache[string, *cacheRows]
+	query           string
+	info            domains.CachePlanSelectQuery
+	uniqueOnly      bool         // if true, query is like "SELECT * FROM table WHERE pk = ?"
+	lastUpdate      atomic.Int64 // time.Time.UnixNano()
+	lastUpdateByKey syncMap[int64]
+	replaceTime     atomic.Int64
+}
+
+func (c *cacheWithInfo) updateTx() {
+	c.lastUpdate.Store(time.Now().UnixNano())
+}
+
+func (c *cacheWithInfo) updateByKeyTx(key string) {
+	c.lastUpdateByKey.Store(key, time.Now().UnixNano())
+}
+
+func (c *cacheWithInfo) isNewerThan(key string, t int64) bool {
+	if c.lastUpdate.Load() > t {
+		return true
+	}
+	if update, ok := c.lastUpdateByKey.Load(key); ok && update > t {
+		return true
+	}
+	return false
+}
+
+func (c *cacheWithInfo) RecordReplaceTime(time time.Duration) {
+	c.replaceTime.Add(time.Nanoseconds())
+}
 
 type (
 	queryKey          struct{}
@@ -13,12 +52,20 @@ type (
 	argsKey           struct{}
 	queryerCtxKey     struct{}
 	namedValueArgsKey struct{}
+	cacheWithInfoKey  struct{}
 )
 
 func ExportMetrics() string {
+	cacheList := make([]*cacheWithInfo, 0, len(caches))
+	for _, cache := range caches {
+		cacheList = append(cacheList, cache)
+	}
+	sort.SliceStable(cacheList, func(i, j int) bool {
+		return cacheList[i].replaceTime.Load() < cacheList[j].replaceTime.Load()
+	})
 	res := ""
-	for query, cache := range caches {
-		stats := cache.cache.Stats()
+	for _, cache := range cacheList {
+		stats := cache.Stats()
 		progress := "["
 		for i := 0; i < 20; i++ {
 			if i < int(stats.HitRatio()*20) {
@@ -27,8 +74,9 @@ func ExportMetrics() string {
 				progress += "-"
 			}
 		}
-		statsStr := fmt.Sprintf("%s (%.2f%% - %d/%d) (%d replace) (size %d)", progress, stats.HitRatio()*100, stats.Hits, stats.Misses+stats.Hits, stats.Replacements, stats.Size)
-		res += fmt.Sprintf("query: \"%s\"\n%s\n\n", query, statsStr)
+		progress += "]"
+		statsStr := fmt.Sprintf("%s (%.2f%% - %d/%d)\n%d replace (%.2fms) / size = %d", progress, stats.HitRatio()*100, stats.Hits, stats.Misses+stats.Hits, stats.Replacements, float64(cache.replaceTime.Load())/1000, stats.Size)
+		res += fmt.Sprintf("query: \"%s\"\n%s\n\n", cache.query, statsStr)
 	}
 	return res
 }
@@ -43,7 +91,7 @@ type CacheStats struct {
 func ExportCacheStats() map[string]CacheStats {
 	res := make(map[string]CacheStats)
 	for query, cache := range caches {
-		stats := cache.cache.Stats()
+		stats := cache.Stats()
 		res[query] = CacheStats{
 			Query:    query,
 			HitRatio: stats.HitRatio(),
@@ -56,7 +104,7 @@ func ExportCacheStats() map[string]CacheStats {
 
 func PurgeAllCaches() {
 	for _, cache := range caches {
-		cache.cache.Purge()
+		cache.Purge()
 	}
 }
 
@@ -108,4 +156,21 @@ func replaceFn(ctx context.Context, key string) (*cacheRows, error) {
 		return nil, err
 	}
 	return cacheRows.clone(), nil
+}
+
+type syncMap[T any] struct {
+	m sync.Map
+}
+
+func (m *syncMap[T]) Load(key string) (T, bool) {
+	var zero T
+	v, ok := m.m.Load(key)
+	if !ok {
+		return zero, false
+	}
+	return v.(T), true
+}
+
+func (m *syncMap[T]) Store(key string, value T) {
+	m.m.Store(key, value)
 }
