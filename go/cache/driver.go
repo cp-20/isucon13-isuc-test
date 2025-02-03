@@ -20,6 +20,7 @@ var queryMap = make(map[string]domains.CachePlanQuery)
 
 var tableSchema = make(map[string]domains.TableSchema)
 
+// TODO: generate
 const cachePlanRaw = `queries:
   - query: SELECT id FROM tags WHERE name = ?;
     type: select
@@ -660,7 +661,6 @@ const cachePlanRaw = `queries:
     table: livestreams
     cache: false
 `
-
 const schemaRaw = `USE ` + "`" + `isupipe` + "`" + `;
 
 DROP TABLE IF EXISTS ` + "`" + `users` + "`" + `;
@@ -817,7 +817,7 @@ func init() {
 		}
 
 		conditions := query.Select.Conditions
-			if isSingleUniqueCondition(conditions, query.Select.Table) {
+		if isSingleUniqueCondition(conditions, query.Select.Table) {
 			caches[normalized] = &cacheWithInfo{
 				Cache:      sc.NewMust(replaceFn, 10*time.Minute, 10*time.Minute),
 				query:      normalized,
