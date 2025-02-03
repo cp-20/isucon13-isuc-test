@@ -75,7 +75,8 @@ func ExportMetrics() string {
 			}
 		}
 		progress += "]"
-		statsStr := fmt.Sprintf("%s (%.2f%% - %d/%d)\n%d replace (%.2fms) / size = %d", progress, stats.HitRatio()*100, stats.Hits, stats.Misses+stats.Hits, stats.Replacements, float64(cache.replaceTime.Load())/1000, stats.Size)
+		replaceTime := time.Duration(cache.replaceTime.Load()).String()
+		statsStr := fmt.Sprintf("%s (%.2f%% - %d/%d)\n%d replace (%s) / size = %d", progress, stats.HitRatio()*100, stats.Hits, stats.Misses+stats.Hits, stats.Replacements, replaceTime, stats.Size)
 		res += fmt.Sprintf("query: \"%s\"\n%s\n\n", cache.query, statsStr)
 	}
 	return res
